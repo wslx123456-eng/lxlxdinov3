@@ -1,0 +1,82 @@
+# Tuned linear-probing config for a private TIFF/PNG segmentation dataset
+# with about 16k training images and 1k validation images.
+#
+# Main changes vs the default template:
+# - train longer: 48k iters ~= 12 epochs when bs=4 on 16k images
+# - use 4 backbone layers instead of only the last one
+# - slightly larger crop / eval window for better small-object retention
+# - validate more frequently to find the real peak
+
+output_dir: "/path/to/output/tif_linear_probe_16k"
+
+model:
+  config_file: "/path/to/dinov3-main/dinov3/configs/train/multidist_tests/vitb_p16.yaml"
+  pretrained_weights: "/path/to/checkpoints/dinov3_vitb16_pretrain_lvd1689m.pth"
+
+bs: 4
+n_gpus: 1
+num_workers: 8
+metric_to_save: "mIoU"
+model_dtype: FLOAT32
+
+scheduler:
+  total_iter: 48000
+  type: "WarmupOneCycleLR"
+  constructor_kwargs:
+    warmup_iters: 1500
+    warmup_ratio: 1e-6
+    final_div_factor: 1000.0
+    pct_start: 0.05
+    anneal_strategy: "cos"
+    use_beta1: False
+    update_momentum: False
+
+optimizer:
+  lr: 7e-4
+  beta1: 0.9
+  beta2: 0.999
+  weight_decay: 5e-4
+  gradient_clip: 35.0
+
+datasets:
+  root: "/path/to/dataset_root"
+  format: "tif_mask_pairs"
+  train_images: null
+  train_masks: null
+  val_images: null
+  val_masks: null
+  label_values: [0, 50, 100]
+
+train:
+  # Combined CE + Dice with moderate reweighting for the rare foreground classes.
+  # Tune these weights if class-2 recall is still too low.
+  diceloss_weight: 0.5
+  celoss_weight: 1.0
+  class_weights: [0.2, 3.0, 12.0]
+
+decoder_head:
+  type: "linear"
+  backbone_out_layers: FOUR_LAST
+  num_classes: 3
+  dropout: 0.1
+
+transforms:
+  mean: [123.675, 116.28, 103.53]
+  std: [58.395, 57.12, 57.375]
+  train:
+    img_size: 640
+    random_img_size_ratio_range: [0.9, 1.1]
+    crop_size: [640, 640]
+    flip_prob: 0.5
+    enable_photometric_distortion: True
+  eval:
+    img_size: 640
+
+eval:
+  compute_metric_per_image: False
+  reduce_zero_label: False
+  mode: "slide"
+  crop_size: 640
+  stride: 426
+  eval_interval: 2000
+  use_tta: False

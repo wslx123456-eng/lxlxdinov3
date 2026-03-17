@@ -1,0 +1,183 @@
+/mnt/data/project/zsy/UniMapGenStrongBaseline我在这个文件目录下有一个项目，它是用来生成地图的，我现在需要你对它进行一定的修改，我将会使用tif文件加上geojson文件进行训练，其中tif文件是3通道，数值是0-255，geojson的格式为{
+  "type": "FeatureCollection",
+  "name": "Lane",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "Id": "4433613518603788",
+        "Length": 3699,
+        "RoadId": "4434010567097373",
+        "LaneType": 14,
+        "TurnType": 1,
+        "RoadIDSource": 0,
+        "TurnTypeSource": 2,
+        "LaneTypeSource": 32,
+        "IsThereStopLine": false,
+        "Width": 3.5,
+        "Source": 0,
+        "IsIntersectionInLane": true,
+        "IsIntersectionOutLane": true,
+        "IsThereRoadSplit": false,
+        "IsLeftmost": true,
+        "IsRightmost": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [116.63685899999773, 40.08021700041632, 0],
+          [116.63719599999776, 40.08021700041632, 0]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Id": "4433613518603789",
+        "Length": 4139,
+        "RoadId": "4434010567097373",
+        "LaneType": 9,
+        "TurnType": 1,
+        "RoadIDSource": 0,
+        "TurnTypeSource": 2,
+        "LaneTypeSource": 32,
+        "IsThereStopLine": false,
+        "Width": 3.5,
+        "Source": 0,
+        "IsIntersectionInLane": true,
+        "IsIntersectionOutLane": true,
+        "IsThereRoadSplit": false,
+        "IsLeftmost": true,
+        "IsRightmost": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [116.63685799999777, 40.080155000416326, 0],
+          [116.6372359999978, 40.080389000416375, 0]
+        ]
+      }
+    }
+  ]
+}，推理阶段只需要用tif就能给出我需要的lane （即车道中心线），我需要你为我的训练和推理写出训练脚本、评估脚本、推理脚本、geojson文本转token的tokenizer以及一切你认为在我的训练和推理以及效果评估阶段需要的脚本，训练方式是将dinov2冻结，只训练dinov2到qwen的模态转化器与qwen的lora微调，同时提供另一个脚本来支持dinov2冻结时的模态转化器与qwen的全量训练，推理脚本要支持单个样本推理与多样本推理，并且推理和训练的所有配置都可以在配置里修改，还有就是我需要可以选择加载某次的训练权重来进行推理和继续训练，第一次训练不修改预训练权重，而是在新目录下生成一个权重文件，可以在配置里面改在哪个路径下的训练权重进行训练，继续训练是直接修改原权重而不生成新文件，权重的备份我手动完成，评估脚本要用5-10个参数来评估，至于是什么参数你来确定，最好是用在工程化场景中来分析问题的评估参数，给我写4个文档，分别是需要安装的依赖以及一件安装命令、我们的聊天日志便于新的聊天找回记忆、所有你做出的修改以及每个文件的功能介绍和使用说明，还有一个文档是我需要组织的数据集的文件结构，你定文件结构我来对齐你。最后还有什么信息需要我提供来完成工作的一定要先问我，不要自己编
+
+
+
+
+我必须告诉你一个前提，所有的数据文件都是高度保密的，不可能让你看到原版的，所以你可以问我一些这些文件的特征，然后我可以告诉你这些文件具有什么样的特征，来让你判断到底是什么文件，我现在回答你的问题：1.我无法给你具体样本，但是我可以给你我在lane.geojson中读到的信息，里面有多个元素，我只从中手动打字敲出了两个元素，格式是完全按照它的格式来的，注意原文是非结构化的只有一整行，我给你的是结构化后的：{ 
+  "type": "FeatureCollection",
+  "name": "Lane",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "Id": "4433613518603788",
+        "Length": 3699,
+        "RoadId": "4434010567097373",
+        "LaneType": 14,
+        "TurnType": 1,
+        "RoadIDSource": 0,
+        "TurnTypeSource": 2,
+        "LaneTypeSource": 32,
+        "IsThereStopLine": false,
+        "Width": 3.5,
+        "Source": 0,
+        "IsIntersectionInLane": true,
+        "IsIntersectionOutLane": true,
+        "IsThereRoadSplit": false,
+        "IsLeftmost": true,
+        "IsRightmost": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [116.63685899999773, 40.08021700041632, 0],
+          [116.63719599999776, 40.08021700041632, 0]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Id": "4433613518603789",
+        "Length": 4139,
+        "RoadId": "4434010567097373",
+        "LaneType": 9,
+        "TurnType": 1,
+        "RoadIDSource": 0,
+        "TurnTypeSource": 2,
+        "LaneTypeSource": 32,
+        "IsThereStopLine": false,
+        "Width": 3.5,
+        "Source": 0,
+        "IsIntersectionInLane": true,
+        "IsIntersectionOutLane": true,
+        "IsThereRoadSplit": false,
+        "IsLeftmost": true,
+        "IsRightmost": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [116.63685799999777, 40.080155000416326, 0],
+          [116.6372359999978, 40.080389000416375, 0]
+        ]
+      }
+    }
+  ]
+} 。2.这些.tif 文件有地理位置信息，它的左上角的经纬度信息是有的，其中像素点的信息是用左上角的信息加偏移算出来的。3.他们始终在同一坐标系。4.也许你可以告诉我什么方法让查看这个文件的底层属性来让我可以告诉你它的底层信息，或者你写代码时做兼容可以容忍它的顺序信息，它的值就是0-255。5.所有的属性都需要训练，而且现在只是初级阶段，后续你还要训练怎么标出路口、路标之类的信息。6.是，而且放某次训练的文件夹名需要是训练开始的时间来命名，每次在上次的基础上训练都要修改文件夹名，这个文件夹我可能随时手动复制备份或者改名，所以文件夹名的合法性无需鉴定
+
+
+
+
+
+我现在想要你同时生成lane和路口1.tif的宽高不用关注，每个tif的大小都不一样，取决于路的形状，CRS栏是EPSG:32650-WGS 84/UTM zone 50N -Projected,某个tif文件的Origin栏是468250.3934450345695950,4438085.1954841911792755，但是注意每个tif的Origin不一样，Pixel Size栏是0.2000000000000000111,-0.2000000000000000111，每个都一样，Corner Coordinates没找到，band分123，statistics_approximate都是yes，最小值都是0，最大值都是255，scale都是1，offset都是0，statistics_valid_percent都是100，有一些不一样，band1 statistics_mean=1.4532232992734,statistics_stddev=18.59190602437,band2statistics_mean=1.1856769496195,statistics_stddev=16.666843234765,band3 statistics_mean=1.5174240132957,statistics_stddev=19.167024840149。2.不是，数据集里有一大堆文件，文件名是编号，编号的含义你不必在意，进入编号文件夹后也会有很多文件夹，我们训练要用的真值是编号文件夹下的patch_tif中的0和0_edit_poly，其中patch_tif是整个地图的场景，0_edit_poly是一大块黑色的mask区域和里面扣出来的一点白色区域，白色区域是人工审核过的lane和intersection的真值，别的区域都是没有审核过直接生成的，所以别的区域我在训练时不会作为真值输入，推理时我会输入0，但是训练时我会输入patch_tif/0,patch_tif/0_edit_poly，label_check_crop/Lane.geojson,label_check_crop/Intersection.geojson。4.我在稍后会给你Intersection.geojson的数据格式。3.我之前说的有问题，我要你输出两段文本，一段是Lane.geojson格式的，预测路，一段是Intersection.geojson格式的，预测路口，他们的所有属性都要被预测，而不是只预测一种或一个。5.我已经给了你数据格式了，你为什么还会问这种问题？你不知道""内是string？加""的都是string，不加""的都是bool、int、float，类型的都是int,经纬度都是float。6.我在1回答里已经给了你所有我能得到的信息了。7.是的，我需要你恢复这些。8.是的，我确认。以下是Intersection.geojson的格式，我给你的是格式化后的原数据，真正的lane和intersection的原数据都是未格式化的只有一行,我给你的那两段lane和intersection的原数据是出自同一patch的,注意一个patch可能有多个lane和intersection，因此"properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+字段相同，你参考格式即可{
+  "type": "FeatureCollection",
+  "name": "Intersection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "Id": "4479890583257091",
+        "IntersectionType": 1,
+        "IsRegular": null,
+        "IntersectionSubType": 1,
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [116.32211023700779, 39.70134515429996, 0],
+          [116.32256787183654, 39.701422608756225, 0]，
+          [116.32256787183654, 39.701422608756225, 0]，
+          [116.32256787183654, 39.701422608756225, 0]，
+          [116.32256787183654, 39.701422608756225, 0]，
+          [116.32256787183654, 39.701422608756225, 0]，
+          [116.32256787183654, 39.701422608756225, 0]，
+          [116.32256787183654, 39.701422608756225, 0]，
+          [116.32256787183654, 39.701422608756225, 0]，
+        ]
+      }
+    }
+  ]
+}注意我这里的Intersection的coordinates字段是不对的，我没有完全copy下来，它是一些把路口围出来的点，第一个点和最后一个点是相同的，表示首尾相连

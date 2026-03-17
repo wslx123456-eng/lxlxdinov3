@@ -1,0 +1,77 @@
+# Example config for TIFF/PNG semantic segmentation with DINOv3 linear probing.
+# Expected dataset layout by default:
+#   <root>/train/images/*.(tif|png)
+#   <root>/train/masks/*.(tif|png)
+#   <root>/val/images/*.(tif|png)
+#   <root>/val/masks/*.(tif|png)
+
+output_dir: "/path/to/output/tif_linear_probe"
+
+model:
+  config_file: "/path/to/dinov3-main/dinov3/configs/train/multidist_tests/vitb_p16.yaml"
+  pretrained_weights: "/path/to/checkpoints/dinov3_vitb16_pretrain_lvd1689m.pth"
+
+bs: 2
+n_gpus: 1
+metric_to_save: "mIoU"
+model_dtype: FLOAT32
+
+scheduler:
+  total_iter: 10000
+  type: "WarmupOneCycleLR"
+  constructor_kwargs:
+    warmup_iters: 500
+    warmup_ratio: 1e-6
+    final_div_factor: .inf
+    pct_start: 0
+    anneal_strategy: "cos"
+    use_beta1: False
+    update_momentum: False
+
+optimizer:
+  lr: 1e-3
+  beta1: 0.9
+  beta2: 0.999
+  weight_decay: 1e-3
+  gradient_clip: "inf"
+
+datasets:
+  root: "/path/to/dataset_root"  # Dataset root
+  format: "tif_mask_pairs"
+  train_images: null
+  train_masks: null
+  val_images: null
+  val_masks: null
+  label_values: [0, 50, 100]
+
+train:
+  diceloss_weight: 0.5
+  celoss_weight: 1.0
+  class_weights: [0.2, 3.0, 12.0]
+
+decoder_head:
+  type: "linear"
+  backbone_out_layers: FOUR_LAST
+  num_classes: 3
+  dropout: 0.1
+
+transforms:
+  mean: [123.675, 116.28, 103.53]
+  std: [58.395, 57.12, 57.375]
+  train:
+    img_size: 512
+    random_img_size_ratio_range: [0.8, 1.2]
+    crop_size: [512, 512]
+    flip_prob: 0.5
+    enable_photometric_distortion: False
+  eval:
+    img_size: 512
+
+eval:
+  compute_metric_per_image: False
+  reduce_zero_label: False
+  mode: "slide"
+  crop_size: 512
+  stride: 341
+  eval_interval: 100
+  use_tta: False

@@ -1,0 +1,74 @@
+# Example config for LiDAR BEV semantic segmentation with TIFF rasters.
+# Expected dataset layout by default:
+#   <root>/train/images/*.tif
+#   <root>/train/masks/*.(png|tif)
+#   <root>/val/images/*.tif
+#   <root>/val/masks/*.(png|tif)
+
+bs: 2
+n_gpus: 1
+metric_to_save: "mIoU"
+model_dtype: FLOAT32
+
+scheduler:
+  total_iter: 10000
+  type: "WarmupOneCycleLR"
+  constructor_kwargs:
+    warmup_iters: 500
+    warmup_ratio: 1e-6
+    final_div_factor: .inf
+    pct_start: 0
+    anneal_strategy: "cos"
+    use_beta1: False
+    update_momentum: False
+
+optimizer:
+  lr: 5e-4
+  beta1: 0.9
+  beta2: 0.999
+  weight_decay: 1e-3
+  gradient_clip: "inf"
+
+datasets:
+  root: ""  # Dataset root
+  format: "bev_tiff"
+  train_images: null
+  train_masks: null
+  val_images: null
+  val_masks: null
+
+input_adapter:
+  in_channels: 1
+  mode: "conv"
+
+train:
+  diceloss_weight: 0.0
+  celoss_weight: 1.0
+
+decoder_head:
+  type: "bev"
+  backbone_out_layers: FOUR_LAST
+  num_classes: 2
+  hidden_dim: 256
+  dropout: 0.1
+
+transforms:
+  mean: [0.0]
+  std: [1.0]
+  train:
+    img_size: 512
+    random_img_size_ratio_range: [0.8, 1.2]
+    crop_size: [512, 512]
+    flip_prob: 0.5
+    enable_photometric_distortion: False
+  eval:
+    img_size: 512
+
+eval:
+  compute_metric_per_image: False
+  reduce_zero_label: False
+  mode: "slide"
+  crop_size: 512
+  stride: 341
+  eval_interval: 1000
+  use_tta: False
