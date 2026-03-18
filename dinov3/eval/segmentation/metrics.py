@@ -47,13 +47,21 @@ def calculate_segmentation_metrics(
         metrics=metrics,
         beta=beta,
     )
+    gt_ratio = total_area_label / torch.clamp(total_area_label.sum(), min=1)
+    pred_ratio = total_area_pred_label / torch.clamp(total_area_pred_label.sum(), min=1)
     df = pd.DataFrame(
         {
             "Class Index": np.arange(len(metrics_dict["mIoU"])),
             "mIoU": 100 * metrics_dict["mIoU"].cpu().numpy(),
+            "Class Acc": 100 * metrics_dict["acc"].cpu().numpy(),
+            "Precision": 100 * metrics_dict["precision"].cpu().numpy(),
+            "Recall": 100 * metrics_dict["recall"].cpu().numpy(),
+            "Dice": 100 * metrics_dict["dice"].cpu().numpy(),
+            "GT Ratio": 100 * gt_ratio.cpu().numpy(),
+            "Pred Ratio": 100 * pred_ratio.cpu().numpy(),
         }
     )
-    logger.info(f"mIoU per class:\n{df.to_string(index=False)}")
+    logger.info(f"Per-class segmentation metrics:\n{df.to_string(index=False)}")
     return {
         "mIoU": metrics_dict["mIoU"].nanmean(),
         "acc": metrics_dict["acc"].nanmean(),
@@ -136,13 +144,12 @@ def total_area_to_metrics(
 
     all_acc = total_area_intersect.sum() / total_area_label.sum()
     ret_metrics = dict({"aAcc": all_acc})
+    ret_metrics["acc"] = total_area_intersect / total_area_label
     for metric in metrics:
         if metric == "mIoU":
             ret_metrics["mIoU"] = total_area_intersect / total_area_union
-            ret_metrics["acc"] = total_area_intersect / total_area_label
         elif metric == "dice":
             ret_metrics["dice"] = 2 * total_area_intersect / (total_area_pred_label + total_area_label)
-            ret_metrics["acc"] = total_area_intersect / total_area_label
         elif metric == "fscore":
             precision = total_area_intersect / total_area_pred_label
             recall = total_area_intersect / total_area_label
@@ -150,4 +157,14 @@ def total_area_to_metrics(
             ret_metrics["fscore"] = f_value
             ret_metrics["precision"] = precision
             ret_metrics["recall"] = recall
+    if "dice" not in ret_metrics:
+        ret_metrics["dice"] = 2 * total_area_intersect / (total_area_pred_label + total_area_label)
+    if "precision" not in ret_metrics:
+        ret_metrics["precision"] = total_area_intersect / total_area_pred_label
+    if "recall" not in ret_metrics:
+        ret_metrics["recall"] = total_area_intersect / total_area_label
+    if "fscore" not in ret_metrics:
+        precision = ret_metrics["precision"]
+        recall = ret_metrics["recall"]
+        ret_metrics["fscore"] = torch.tensor([f_score(x[0], x[1], beta) for x in zip(precision, recall)])
     return ret_metrics

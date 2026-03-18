@@ -78,5 +78,5 @@ eval:
   mode: "slide"
   crop_size: 640
   stride: 426
-  eval_interval: 2000
+  eval_interval: 50
   use_tta: False
